@@ -11,6 +11,10 @@ function write_log($action, $data) {
 switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         // Get Todos (READ)
+        $todos = [
+            ["id" => "uniqueId", "title" => "First TODO"]
+        ];
+        echo json_encode($todos);
         write_log("READ", null);
         break;
     case 'POST':
