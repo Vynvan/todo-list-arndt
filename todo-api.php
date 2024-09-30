@@ -1,13 +1,6 @@
 <?php
 header("Content-Type: application/json");
 
-function write_log($action, $data) {
-    $log = fopen('log.txt', 'a');
-    $timestamp = date('Y-m-d H:i:s');
-    fwrite($log, "$timestamp - $action: " . json_encode($data) . "\n");
-    fclose($log);
-}
-
 $todo_file = 'todos.json';
 $todo_items = json_decode(file_get_contents($todo_file), true);
 
@@ -15,7 +8,7 @@ switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         // Get Todos (READ):
         echo json_encode($todo_items);
-        write_log("READ", null);
+        write_log("READ", count($todo_items));
         break;
     case 'POST':
         // Add todo (CREATE):
@@ -24,14 +17,39 @@ switch($_SERVER['REQUEST_METHOD']) {
         $todo_items[] = $new_todo;
         file_put_contents($todo_file, json_encode($todo_items));
         echo json_encode($new_todo);
-        write_log("CREATE", null);
+        write_log("CREATE", $new_todo);
         break;
     case 'PUT':
-        // Change todo (UPDATE)
-        write_log("UPDATE", null);
+        // Change todo (UPDATE):
         break;
     case 'DELETE':
-        // Remove todo (DELETE)
-        write_log("DELETE", null);
+        // Remove todo (DELETE):
+        $data = json_decode(file_get_contents('php://input'), true);
+        $toUpdate = $data['id'];
+        $todo_id = getById($todo_items, $toUpdate);
+        if ($todo_id != null) {
+            unset($todo_items[$todo_id]);
+            file_put_contents($todo_file, json_encode($todo_items));
+            echo json_encode($data);
+            write_log("DELETE", $data);
+        }
+        else echo json_encode(array("error" => "Fehler: Todo nicht gefunden $toUpdate => $todo_id"));
         break;
+}
+
+
+function write_log($action, $data) {
+    $log = fopen('log.txt', 'a');
+    $timestamp = date('Y-m-d H:i:s');
+    fwrite($log, "$timestamp - $action: " . json_encode($data) . "\n");
+    fclose($log);
+}
+
+function getById($array, $id) {
+    foreach ($array as $key => $val) {
+        if ($val['id'] === $id) {
+            return $key;
+        }
+    }
+    return null;
 }

@@ -1,15 +1,14 @@
-document.addEventListener('DOMContentLoaded', () => {
+const apiUrl = "todo-api.php";
 
+document.addEventListener('DOMContentLoaded', () => {
+    
     // Define the URL to our PHP API
-    const apiUrl = "todo-api.php";
     fetch(apiUrl)
     .then(response => response.json())
     .then(data => {
         const todoList = document.getElementById('todo-list');
         data.forEach(item => {
-            const li = document.createElement('li');
-            li.textContent = item.title;
-            todoList.appendChild(li);
+            addTodo(todoList, item);
         });
     });
 
@@ -27,9 +26,35 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             const todoList = document.getElementById('todo-list');
-            const li = document.createElement('li');
-            li.textContent = data.title;
-            todoList.appendChild(li);
+            addTodo(todoList, data);
         });
     });
 });
+
+function addTodo(list, item) {
+    const li = document.createElement('li');
+    li.id = item.id;
+    li.textContent = item.title;
+    addDeleteButton(li, item);
+    list.appendChild(li);
+}
+
+function addDeleteButton(li, item) {
+    const button = document.createElement('button');
+    button.addEventListener('click', () => {
+        fetch(apiUrl, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: item.id })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const li = document.getElementById(data['id']);
+            li.remove();
+        });
+    });
+    button.innerHTML = 'Entfernen';
+    li.appendChild(button);
+}
