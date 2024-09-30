@@ -14,12 +14,17 @@ $todo_items = json_decode(file_get_contents($todo_file), true);
 
 switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
-        // Get Todos (READ)
+        // Get Todos (READ):
         echo json_encode($todo_items);
         write_log("READ", null);
         break;
     case 'POST':
-        // Add todo (CREATE)
+        // Add todo (CREATE):
+        $data = json_decode(file_get_contents('php://input'), true); // Get data from the input stream
+        $new_todo = ["id" => uniqid(), "title" => $data['title']]; // Create new todo item
+        $todo_items[] = $new_todo; // Add new item to our todo item list
+        file_put_contents($todo_file, json_encode($todo_items)); // Write todo items to JSON file
+        echo json_encode($new_todo); // Return the new item
         write_log("CREATE", null);
         break;
     case 'PUT':
