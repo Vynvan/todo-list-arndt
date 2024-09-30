@@ -8,13 +8,14 @@ function write_log($action, $data) {
     fclose($log);
 }
 
+// Read content of the file and decode JSON data to an array.
+$todo_file = 'todos.json';
+$todo_items = json_decode(file_get_contents($todo_file), true);
+
 switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
         // Get Todos (READ)
-        $todos = [
-            ["id" => "uniqueId", "title" => "First TODO"]
-        ];
-        echo json_encode($todos);
+        echo json_encode($todo_items);
         write_log("READ", null);
         break;
     case 'POST':
