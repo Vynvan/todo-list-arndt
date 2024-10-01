@@ -35,6 +35,7 @@ function addTodo(list, item) {
     const li = document.createElement('li');
     li.id = item.id;
     li.textContent = item.title;
+    addEditButton(li, item);
     addDeleteButton(li, item);
     list.appendChild(li);
 }
@@ -56,5 +57,17 @@ function addDeleteButton(li, item) {
         });
     });
     button.innerHTML = 'Entfernen';
+    li.appendChild(button);
+}
+
+function addEditButton(li, item) {
+    const button = document.createElement('button');
+    button.addEventListener('click', () => {
+        const todoForm = document.getElementById('todo-form');
+        const editForm = document.getElementById('edit-form');
+        todoForm.classList.toggle('hidden');
+        editForm.classList.toggle('hidden');
+    });
+    button.innerHTML = 'Bearbeiten';
     li.appendChild(button);
 }

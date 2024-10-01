@@ -21,6 +21,16 @@ switch($_SERVER['REQUEST_METHOD']) {
         break;
     case 'PUT':
         // Change todo (UPDATE):
+        $data = json_decode(file_get_contents('php://input'), true);
+        $toUpdate = $data['id'];
+        $todo_id = getById($todo_items, $toUpdate);
+        if ($todo_id != null) {
+            $todo_items[$todo_id] = $data['title'];
+            file_put_contents($todo_file, json_encode($todo_items));
+            echo json_encode($data);
+            write_log("UPDATE", $data);
+        }
+        else echo json_encode(array("error" => "Fehler: Todo nicht gefunden $toUpdate => $todo_id"));
         break;
     case 'DELETE':
         // Remove todo (DELETE):
