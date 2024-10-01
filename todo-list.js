@@ -1,4 +1,5 @@
 const apiUrl = "todo-api.php";
+let editListener = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -29,12 +30,16 @@ document.addEventListener('DOMContentLoaded', () => {
             addTodo(todoList, data);
         });
     });
+
+    document.getElementById('abort-edit').addEventListener('click', () => switchForms());
 });
 
 function addTodo(list, item) {
     const li = document.createElement('li');
+    const text = document.createElement('span');
+    text.textContent = item.title;
     li.id = item.id;
-    li.textContent = item.title;
+    li.appendChild(text);
     addEditButton(li, item);
     addDeleteButton(li, item);
     list.appendChild(li);
@@ -56,6 +61,7 @@ function addDeleteButton(li, item) {
             li.remove();
         });
     });
+    button.classList.add('del-btn');
     button.innerHTML = 'Entfernen';
     li.appendChild(button);
 }
@@ -63,11 +69,42 @@ function addDeleteButton(li, item) {
 function addEditButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
-        const todoForm = document.getElementById('todo-form');
+        switchForms();
+        document.getElementById('edit-input').value = item.title;
         const editForm = document.getElementById('edit-form');
-        todoForm.classList.toggle('hidden');
-        editForm.classList.toggle('hidden');
+        editForm.removeEventListener('submit', editListener);
+        editListener = (ev) => {
+            ev.preventDefault();
+            updateItem(item, true);
+        }
+        editForm.addEventListener('submit', editListener);
     });
+    button.classList.add('edit-btn');
     button.innerHTML = 'Bearbeiten';
     li.appendChild(button);
+}
+
+function updateItem(item, editFormActive=false) {
+    const title = document.getElementById('edit-input').value;
+    fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: item.id, title: title })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const li = document.getElementById(data['id']);
+        const span = li.getElementsByTagName('span')[0];
+        span.textContent = data['title'];
+        if (editFormActive)
+            switchForms();
+    });
+}
+
+function switchForms() {
+    document.getElementById('todo-form').classList.toggle('hidden');
+    document.getElementById('edit-form').classList.toggle('hidden');
+    document.getElementById('edit-input').value = "";
 }
