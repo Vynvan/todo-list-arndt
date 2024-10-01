@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             const todoList = document.getElementById('todo-list');
             addTodo(todoList, data);
+            document.getElementById('todo-input').value = "";
         });
     });
 
@@ -37,9 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
 function addTodo(list, item) {
     const li = document.createElement('li');
     const text = document.createElement('span');
-    text.textContent = item.title;
     li.id = item.id;
+    if (item.done)
+        li.classList.add('done');
+    text.textContent = item.title;
     li.appendChild(text);
+    addDoneButton(li, item);
     addEditButton(li, item);
     addDeleteButton(li, item);
     list.appendChild(li);
@@ -66,6 +70,17 @@ function addDeleteButton(li, item) {
     li.appendChild(button);
 }
 
+function addDoneButton(li, item) {
+    const button = document.createElement('button');
+    button.addEventListener('click', () => {
+        item.done = !li.classList.contains('done');
+        updateItem(item, false);
+    });
+    button.classList.add('done-btn');
+    button.innerHTML = 'Erledigt';
+    li.appendChild(button);
+}
+
 function addEditButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
@@ -75,6 +90,7 @@ function addEditButton(li, item) {
         editForm.removeEventListener('submit', editListener);
         editListener = (ev) => {
             ev.preventDefault();
+            item.title = document.getElementById('edit-input').value;
             updateItem(item, true);
         }
         editForm.addEventListener('submit', editListener);
@@ -85,19 +101,23 @@ function addEditButton(li, item) {
 }
 
 function updateItem(item, editFormActive=false) {
-    const title = document.getElementById('edit-input').value;
     fetch(apiUrl, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ id: item.id, title: title })
+        body: JSON.stringify(item)
     })
     .then(response => response.json())
     .then(data => {
         const li = document.getElementById(data['id']);
-        const span = li.getElementsByTagName('span')[0];
-        span.textContent = data['title'];
+        if (data['title']) {
+            const span = li.getElementsByTagName('span')[0];
+            span.textContent = data['title'];
+        }
+        if (data['done'])
+            li.classList.add('done');
+        else li.classList.remove('done');
         if (editFormActive)
             switchForms();
     });
@@ -106,5 +126,6 @@ function updateItem(item, editFormActive=false) {
 function switchForms() {
     document.getElementById('todo-form').classList.toggle('hidden');
     document.getElementById('edit-form').classList.toggle('hidden');
+    document.getElementById('todo-input').value = "";
     document.getElementById('edit-input').value = "";
 }

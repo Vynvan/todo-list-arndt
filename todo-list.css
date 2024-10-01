@@ -1,3 +1,6 @@
 .hidden {
     display: none;
 }
+.done span {
+    text-decoration: line-through;
+}
