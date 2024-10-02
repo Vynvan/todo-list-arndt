@@ -13,7 +13,8 @@ switch($_SERVER['REQUEST_METHOD']) {
     case 'POST':
         // Add todo (CREATE):
         $data = json_decode(file_get_contents('php://input'), true);
-        $new_todo = ["id" => uniqid(), "title" => $data['title']];
+        $ix = (end($todo_items)['ix'] ?? -1) + 1;
+        $new_todo = ["id" => uniqid(), "title" => $data['title'], "ix" => $ix, "userid" => 1];
         $todo_items[] = $new_todo;
         file_put_contents($todo_file, json_encode($todo_items));
         echo json_encode($new_todo);
@@ -29,15 +30,13 @@ switch($_SERVER['REQUEST_METHOD']) {
                 $todo_items[$todo_id]['title'] = $data['title'];
             }
             if (isset($data['done'])) {
-                // if ($data['done'] === true) {
-                //     $todo_items[$todo_id]['done'] = true;
-                // }
-                // else {
-                //     unset($todo_items[$todo_id]['done']);
-                // }
-                    $todo_items[$todo_id]['done'] = $data['done'];
+                if ($data['done'] === true) $todo_items[$todo_id]['done'] = true;
+                else unset($todo_items[$todo_id]['done']);
+                // $todo_items[$todo_id]['done'] = $data['done'];
             }
-
+            if (isset($data['ix'])) {
+                $todo_items[$todo_id]['ix'] = $data['ix'];
+            }
             file_put_contents($todo_file, json_encode($todo_items));
             echo json_encode($data);
             write_log("UPDATE", $data);

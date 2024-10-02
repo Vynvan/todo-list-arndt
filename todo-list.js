@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('abort-edit').addEventListener('click', () => switchForms());
 });
 
+// Adds a li item for the given item and adds it to the given list
 function addTodo(list, item) {
     const li = document.createElement('li');
     const text = document.createElement('span');
@@ -43,12 +44,15 @@ function addTodo(list, item) {
         li.classList.add('done');
     text.textContent = item.title;
     li.appendChild(text);
+    li.setAttribute('draggable', 'true');
+    li.addEventListener('dragstart', ev => ev.dataTransfer.setData('text/plain', item.id));
     addDoneButton(li, item);
     addEditButton(li, item);
     addDeleteButton(li, item);
     list.appendChild(li);
 }
 
+// Adds the delete button with funtionality for the given item to the given li-element
 function addDeleteButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
@@ -71,6 +75,7 @@ function addDeleteButton(li, item) {
     li.appendChild(button);
 }
 
+// Adds the done button with funtionality for the given item to the given li-element
 function addDoneButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
@@ -83,6 +88,7 @@ function addDoneButton(li, item) {
     li.appendChild(button);
 }
 
+// Adds the edit button with funtionality for the given item to the given li-element
 function addEditButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
@@ -107,6 +113,7 @@ function addEditButton(li, item) {
     li.appendChild(button);
 }
 
+// Does a PUT request with the given item and updates the list after response
 function updateItem(item, editFormActive=false) {
     fetch(apiUrl, {
         method: 'PUT',
@@ -130,6 +137,7 @@ function updateItem(item, editFormActive=false) {
     });
 }
 
+// Sets the todo-form hidden and the edit-form unhidden an vise versa
 function switchForms() {
     document.getElementById('todo-form').classList.toggle('hidden');
     document.getElementById('edit-form').classList.toggle('hidden');
