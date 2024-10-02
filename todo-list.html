@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="todo-list.css">
-    <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" /> -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <title>Todo-Liste</title>
 </head>
 <body>
@@ -14,12 +14,12 @@
     </ul>
     <form id="edit-form" class="hidden">
         <input type="text" id="edit-input" placeholder="Aufgabe bearbeiten">
-        <button type="button" id="abort-edit">Abbrechen</button>
-        <button type="submit">Speichern</button>
+        <button class="material-symbols-outlined" type="button" id="abort-edit">close</button>
+        <button class="material-symbols-outlined" type="submit">check</button>
     </form>
     <form id="todo-form">
         <input type="text" id="todo-input" placeholder="Neue Aufgabe hinzufügen">
-        <button type="submit">Hinzufügen</button>
+        <button class="material-symbols-outlined" type="submit">add</button>
     </form>    
     <script src="todo-list.js"></script>
 </body>

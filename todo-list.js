@@ -66,7 +66,8 @@ function addDeleteButton(li, item) {
         });
     });
     button.classList.add('del-btn');
-    button.innerHTML = 'Entfernen';
+    button.classList.add('material-symbols-outlined');
+    button.innerHTML = 'delete_forever';
     li.appendChild(button);
 }
 
@@ -77,26 +78,32 @@ function addDoneButton(li, item) {
         updateItem(item, false);
     });
     button.classList.add('done-btn');
-    button.innerHTML = 'Erledigt';
+    button.classList.add('material-symbols-outlined');
+    button.innerHTML = 'check';
     li.appendChild(button);
 }
 
 function addEditButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
-        switchForms();
-        document.getElementById('edit-input').value = item.title;
         const editForm = document.getElementById('edit-form');
+        const editInput = document.getElementById('edit-input');
+
+        if (editForm.classList.contains('hidden'))
+            switchForms();
+        editInput.value = item.title;
+
         editForm.removeEventListener('submit', editListener);
         editListener = (ev) => {
             ev.preventDefault();
-            item.title = document.getElementById('edit-input').value;
+            item.title = editInput.value;
             updateItem(item, true);
         }
         editForm.addEventListener('submit', editListener);
     });
     button.classList.add('edit-btn');
-    button.innerHTML = 'Bearbeiten';
+    button.classList.add('material-symbols-outlined');
+    button.innerHTML = 'edit';
     li.appendChild(button);
 }
 
