@@ -3,6 +3,7 @@ header("Content-Type: application/json");
 
 $todo_file = 'todos.json';
 $todo_items = json_decode(file_get_contents($todo_file), true);
+usort($todo_items, "sortByIx");
 
 switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
@@ -59,13 +60,6 @@ switch($_SERVER['REQUEST_METHOD']) {
 }
 
 
-function write_log($action, $data) {
-    $log = fopen('log.txt', 'a');
-    $timestamp = date('Y-m-d H:i:s');
-    fwrite($log, "$timestamp - $action: " . json_encode($data) . "\n");
-    fclose($log);
-}
-
 function getById($array, $id) {
     foreach ($array as $key => $val) {
         if ($val['id'] === $id) {
@@ -73,4 +67,15 @@ function getById($array, $id) {
         }
     }
     return null;
+}
+
+function sortByIx($item1, $item2) {
+    return $item1['ix'] - $item2['ix'];
+}
+
+function write_log($action, $data) {
+    $log = fopen('log.txt', 'a');
+    $timestamp = date('Y-m-d H:i:s');
+    fwrite($log, "$timestamp - $action: " . json_encode($data) . "\n");
+    fclose($log);
 }
