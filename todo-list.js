@@ -1,13 +1,15 @@
 const apiUrl = "todo-api.php";
 let editListener = null;
 let items = null;
+let dragged = null;
+let dragShadow = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     
     // Define the URL to our PHP API
     fetch(apiUrl)
     .then(response => response.json())
-    .then(data => printItems(data));
+    .then(data => printTodoElements(data));
 
     // Add listener that posts the new entry of the todo-form
     document.getElementById('todo-form').addEventListener('submit', e => {
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             const todoList = document.getElementById('todo-list');
-            addTodo(todoList, data);
+            addTodoElement(todoList, data);
             document.getElementById('todo-input').value = "";
         });
     });
@@ -32,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Calls createTodo for the given item and adds the returned li to the given list
-function addTodo(list, item) {
-    const li = createTodo(item);
+function addTodoElement(list, item) {
+    const li = createTodoElement(item);
     list.appendChild(li);
 }
 
@@ -76,7 +78,47 @@ function addDoneButton(li, item) {
 // Adds everything needed for drag'n'drop to work
 function addDragFunctionality(li, item) {
     li.setAttribute('draggable', 'true');
-    li.addEventListener('dragstart', ev => ev.dataTransfer.setData('text/plain', item.id));
+    li.addEventListener('dragstart', ev => {
+        ev.dataTransfer.effectAllowed = 'move';
+        ev.dataTransfer.setData('text/plain', item.id);
+        dragged = item;
+    });
+    li.addEventListener('dragenter', ev => {
+        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+            ev.preventDefault();
+        }
+    });
+    li.addEventListener('dragover', ev => {
+        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+            ev.preventDefault();
+            ev.dataTransfer.dropEffect = 'move';
+
+            let targetLi = ev.target;
+            while (targetLi.tagName !== 'LI')
+                targetLi = targetLi.parentNode;
+            if (targetLi.id !== dragged.id) {
+                console.log(targetLi.id)
+                if (!dragShadow || (dragShadow && dragShadow.id !== targetLi.nextSibling.id)) {
+                    if (dragShadow)
+                        dragShadow.remove();
+                    dragShadow = createTodoElement(dragged);
+                    dragShadow.classList.add('dropIn');
+                    targetLi.parentNode.insertBefore(dragShadow, targetLi.nextSibling);
+                }
+            }
+        }
+    });
+    li.addEventListener('dragleave', ev => {
+        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+            ev.preventDefault();
+        }
+    });
+    li.addEventListener('drop', ev => {
+        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+            ev.preventDefault();
+            dragShadow.remove();
+        }
+    });
     // li.addEventListener('dragEnd')
 }
 
@@ -105,8 +147,17 @@ function addEditButton(li, item) {
     li.appendChild(button);
 }
 
+// Checks if the given li element represents the given todo. This is checked first by id, then by completion state, then by title
+function containsTodo(li, todo) {
+    if (li.id !== todo.id) return false;
+    else if (li.classList.contains('done') !== todo.done)
+        return false;
+    const text = li.getElementsByTagName('span')[0];
+    return text.textContent == todo.title;
+}
+
 // Creates a li-element for the given todo
-function createTodo(item) {
+function createTodoElement(item) {
     const li = document.createElement('li');
     const text = document.createElement('span');
     li.id = item.id;
@@ -122,29 +173,19 @@ function createTodo(item) {
 }
 
 // Prints the given data as todos into the ul#todoList OR updates the existing data by overriding existing li-elements
-function printItems(data, update=false) {
+function printTodoElements(data, update=false) {
+    items = data;
     const todoList = document.getElementById('todo-list');
     for (i=0; i < data.length; i++) {
         if (update) {
             const oldLi = todoList.children[i];
-            if (oldLi.id !== data[i].id) {
-                const newLi = createTodo(data[i]);
+            if (!containsTodo(oldLi, data)) {
+                const newLi = createTodoElement(data[i]);
                 oldLi.outerHTML = newLi;
             }
         }
-        else addTodo(todoList, data[i]);
+        else addTodoElement(todoList, data[i]);
     }
-}
-
-// Checks if the given li elements represent the same todo. This is checked first by id, then by completion state, then by title
-function sameTodo(li1, li2) {
-    if (li1.id !== li2.id) return false;
-    else if (li1.classList.contains('done') !== li2.classList.classList.contains('done'))
-        return false;
-
-    const span1 = li1.getElementsByTagName('span')[0];
-    const span2 = li2.getElementsByTagName('span')[0];
-    return span1.textContent === span2.textContent;
 }
 
 // Sets the todo-form hidden and the edit-form unhidden an vise versa
@@ -166,15 +207,23 @@ function updateItem(item, editFormActive=false) {
     })
     .then(response => response.json())
     .then(data => {
+        const item = items[items.find(el => el.id == data['id'])] ?? {};
         const li = document.getElementById(data['id']);
         if (data['title']) {
             const span = li.getElementsByTagName('span')[0];
             span.textContent = data['title'];
+            item.title = data['title'];
         }
-        if (data['done'])
+        if (data['done']) {
             li.classList.add('done');
-        else li.classList.remove('done');
+            item.done = 1;
+        }
+        else {
+            li.classList.remove('done');
+            item.done = 0;
+        }
         if (editFormActive)
             switchForms();
+        console.log(items);
     });
 }

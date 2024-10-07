@@ -18,6 +18,9 @@ li span {
     flex-grow: 2;
     align-self: center;
 }
+li.dropIn {
+    color: green;
+}
 form {
     display: flex;
     align-content: center;
