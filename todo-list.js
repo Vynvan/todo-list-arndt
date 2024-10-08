@@ -223,20 +223,35 @@ function getTargetLi(event) {
     return targetLi;
 }
 
-// Prints the given data as todos into the ul#todoList OR updates the existing data by overriding existing li-elements
+/**
+ * Inserts the given item into the itemslist.
+ * @param {*} item A todo item
+ */
+function insertItem(item) {
+    const { id, title, ix, done } = item;
+    const newItem = { id, title, ix, done };
+    const index = items.indexOf(el => el.id == id);
+    if (index != -1) {
+        items[index] = newItem;
+    }
+    else items.push(newItem);
+}
+
+/**
+ * Prints the given data as todos into the ul#todoList 
+ * OR inserts it to the items list and overrides existing li-elements.
+ * @param {*} data An array of todo items
+ * @param {*} update If true, the given todo items are merged with the existing ones
+ */
 function printTodoElements(data, update=false) {
-    items = data;
+    if (update) {
+        data.forEach(item => insertItem(item));
+        items.sort((a, b) => a.ix - b.ix);
+    }
+    else items = data;
     const todoList = document.getElementById('todo-list');
-    data.forEach(item => {
-        if (update) {
-            const oldLi = todoList.querySelector(`li[ix="${item.ix}"]`);
-            if (!containsTodo(oldLi, data)) {
-                const newLi = createTodoElement(item);
-                oldLi.outerHTML = newLi.outerHTML;
-            }
-        }
-        else addTodoElement(todoList, item);
-    });
+    todoList.innerHTML = '';
+    items.forEach(item => addTodoElement(todoList, item));
 }
 
 // Sets the todo-form hidden and the edit-form unhidden an vise versa
@@ -258,26 +273,16 @@ function updateItem(item, editFormActive=false) {
     })
     .then(response => response.json())
     .then(data => {
-        const item = items[items.find(el => el.id == data['id'])] ?? {};
-        const li = document.getElementById(data['id']);
-        if (data['title']) {
-            const span = li.getElementsByTagName('span')[0];
-            span.textContent = data['title'];
-            item.title = data['title'];
-        }
-        if (data['done']) {
-            li.classList.add('done');
-            item.done = 1;
-        }
-        else {
-            li.classList.remove('done');
-            item.done = 0;
-        }
+        printTodoElements([data], true);
         if (editFormActive)
             switchForms();
     });
 }
 
+/**
+ * Fetches the given todo items as PUT, then inserts it into items list and ul#todolist.
+ * @param {*} toUpdate 
+ */
 function updateItems(toUpdate) {
     fetch(apiUrl, {
         headers: {

@@ -47,14 +47,17 @@ function updateTodo($item) {
         $text = $uText ? " text=:text " : "";
         $pdo = getPDO();
         $stmt = $pdo->prepare("UPDATE todos SET" . $done . ($done && $uIx ? ", " : "") . $ix . (($done || $uIx) && $text ? ", " : "") . $text . "WHERE id=:id");
-        $result = $stmt->execute(["id" => $item['id'], "text" => $item['title'], "ix" => $item['ix'], "done" => ($item['done'] ? 1 : 0)]);
+        $result = $stmt->execute(["id" => $item['id'], "text" => $item['title'], "ix" => $item['ix'], "done" => ($item['done'])]);
         return $result;
     }
 }
 
 function updateTodos($items) {
-    $result = true;
+    $count = 0;
+    $result = array();
     foreach ($items as $item) {
-        if ($result == true) $result = updateTodo($item);
+        $result[$count] = updateTodo($item);
+        $count++;
     }
+    return $result;
 }
