@@ -1,5 +1,5 @@
 <?php
-require_once('todo-db-api.php');
+require_once 'todo-db-api.php';
 header("Content-Type: application/json");
 
 $todo_file = 'todos.json';
