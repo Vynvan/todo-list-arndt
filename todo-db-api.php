@@ -51,3 +51,10 @@ function updateTodo($item) {
         return $result;
     }
 }
+
+function updateTodos($items) {
+    $result = true;
+    foreach ($items as $item) {
+        if ($result == true) $result = updateTodo($item);
+    }
+}
