@@ -23,7 +23,7 @@ switch($_SERVER['REQUEST_METHOD']) {
     case 'PUT':
         // Change todo (UPDATE):
         $data = json_decode(file_get_contents('php://input'), true);
-        if (isset($data['items'])) $data['result'] = updateTodos($data);
+        if (isset($data['items'])) $data['result'] = updateTodos($data['items']);
         else $data['result'] = updateTodo($data);
         echo json_encode($data);
         write_log("UPDATE", $data);

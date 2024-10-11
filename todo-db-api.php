@@ -39,39 +39,44 @@ function deleteTodo($item) {
 }
 
 function updateTodo($item) {
-    $query = "UPDATE todos SET ";
-    $setParts = [];
-    $values = array("id" => $item['id']);
-    if (isset($item['done'])) {
-        $setParts[] = "completed=:done";
-        $values["done"] = $item['done'];
-    }
-    if (isset($item['ix'])) {
-        $setParts[] = "ix=:ix";
-        $values["ix"] = $item['ix'];
-    }
-    if (isset($item['title'])) {
-        $setParts[] = "text=:title";
-        $values["title"] = $item['title'];
-    }
+    try {
+        $query = "UPDATE todos SET ";
+        $setParts = [];
+        $values = array("id" => $item['id']);
+        if (isset($item['done'])) {
+            $setParts[] = "completed=:done";
+            $values["done"] = $item['done'];
+        }
+        if (isset($item['ix'])) {
+            $setParts[] = "ix=:ix";
+            $values["ix"] = $item['ix'];
+        }
+        if (isset($item['title'])) {
+            $setParts[] = "text=:title";
+            $values["title"] = $item['title'];
+        }
 
-    if (count($setParts) > 0) {
-        $query .= implode(', ', $setParts);
-        $query .= " WHERE id=:id";
-    }
-    else return false;
+        if (count($setParts) > 0) {
+            $query .= implode(', ', $setParts);
+            $query .= " WHERE id=:id";
+        }
+        else return false;
 
-    $pdo = getPDO();
-    $stmt = $pdo->prepare($query);
-    $result = $stmt->execute($values);
-    return $result;
+        $pdo = getPDO();
+        $stmt = $pdo->prepare($query);
+        return $stmt->execute($values);
+    }
+    catch (Exception $e) {
+        error_log($e->getMessage() . json_encode($item));
+        return false;
+    }
 }
 
 function updateTodos($items) {
     $count = 0;
     $result = array();
-    foreach ($items as $item) {
-        $result[$count] = updateTodo($item);
+    foreach ($items as $el) {
+        $result[$count] = updateTodo($el);
         $count++;
     }
     return $result;

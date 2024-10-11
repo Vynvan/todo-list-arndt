@@ -1,7 +1,6 @@
 const apiUrl = "todo-api.php";
 let editListener = null; // Holds the listener for accepting the edit of an item
 let items = null; // Drag/Session: Holds the last GET itemlist
-let backupLi = null;
 let draggedItem = null; // Drag: Holds the currently dragged item
 let draggedLi = null;
 
@@ -79,26 +78,14 @@ function addDoneButton(li, item) {
 // Adds everything needed for drag'n'drop to work
 function addDragFunctionality(li, item) {
     li.setAttribute('draggable', 'true');
-    li.addEventListener('dragstart', ev => {
-        ev.dataTransfer.effectAllowed = 'move';
-        ev.dataTransfer.setData('text/plain', item.id);
-        draggedItem = item;
-        draggedLi = getTargetLi(ev).cloneNode(true);
-        backupLi = null;
-    });
+    li.addEventListener('dragstart', ev => dragstart(ev, item));
     li.addEventListener('dragenter', dragenter);
     li.addEventListener('dragover', ev => {
         if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
             ev.preventDefault();
         }
     });
-    li.addEventListener('drop', ev => {
-        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
-            ev.preventDefault();
-
-            // TODO: Compare items with lis and PUT changes
-        }
-    });
+    li.addEventListener('drop', drop);
 }
 
 // Adds the edit button with funtionality for the given item to the given li-element
@@ -187,11 +174,38 @@ function dragenter(ev) {
             const prevLi = ul.querySelector(`li[id="${draggedLi.id}"]`);
             if (prevLi) {
                 const clone = targetLi.cloneNode(true);
-                clone.addEventListener("dragenter", dragenter);
+                const item = items.find(el => el.id == targetLi.id);
+                addDragFunctionality(clone, item);
                 ul.replaceChild(clone, prevLi);
             }
             ul.replaceChild(draggedLi, targetLi);
         }
+    }
+}
+
+function dragstart(ev, item) {
+    ev.dataTransfer.effectAllowed = 'move';
+    ev.dataTransfer.setData('text/plain', item.id);
+    draggedItem = item;
+    draggedLi = getTargetLi(ev).cloneNode(true);
+    addDragFunctionality(draggedLi, item);
+}
+
+function drop(ev) {
+    if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+        ev.preventDefault();
+        const toUpdate = [];
+        const lis = document.getElementById('todo-list').childNodes;
+        const targetLi = getTargetLi(ev);
+        for (i=0; i < lis.length; i++) {
+            const item = items[i].id == lis[i].id ? items[i] : items.find(el => el.id == lis[i].id);
+            if (item.ix !== i) {
+                item.ix = i;
+                toUpdate.push(item);
+            }
+        }
+        if (toUpdate.length != 0)
+            updateItems(toUpdate);
     }
 }
 
@@ -221,15 +235,15 @@ function insertItem(item) {
 /**
  * Prints the given data as todos into the ul#todoList 
  * OR inserts it to the items list and overrides existing li-elements.
- * @param {*} data An array of todo items
+ * @param {*} items An array of todo items
  * @param {*} update If true, the given todo items are merged with the existing ones
  */
-function printTodoElements(data, update=false) {
+function printTodoElements(newItems, update=false) {
     if (update && items && items.length > 0) {
-        data.forEach(item => insertItem(item));
+        newItems.forEach(item => insertItem(item));
         items.sort((a, b) => a.ix - b.ix);
     }
-    else items = data;
+    else items = newItems;
     const todoList = document.getElementById('todo-list');
     todoList.innerHTML = '';
     items.forEach(item => addTodoElement(todoList, item));
