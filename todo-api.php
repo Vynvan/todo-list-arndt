@@ -1,9 +1,9 @@
 <?php
-require_once 'todo-db-api.php';
+require_once "./classes/TodoDB.php";
 header("Content-Type: application/json");
 
-$todo_file = 'todos.json';
-$todo_items = getAll();
+$todoDb = new TodoDB();
+$todo_items = $todoDb->getTodos();
 
 switch($_SERVER['REQUEST_METHOD']) {
     case 'GET':
@@ -15,23 +15,23 @@ switch($_SERVER['REQUEST_METHOD']) {
         // Add todo (CREATE):
         $data = json_decode(file_get_contents('php://input'), true);
         $ix = (end($todo_items)['ix'] ?? -1) + 1;
-        $new_todo = ["id" => uniqid(), "title" => $data['title'], "ix" => $ix, "userid" => 1];
-        $new_todo['result'] = insertTodo($new_todo);
+        $new_todo = ["title" => $data['title'], "ix" => $ix];
+        $new_todo['result'] = $todoDb->createTodo($new_todo);
         echo json_encode($new_todo);
         write_log("CREATE", $new_todo);
         break;
     case 'PUT':
         // Change todo (UPDATE):
         $data = json_decode(file_get_contents('php://input'), true);
-        if (isset($data['items'])) $data['result'] = updateTodos($data['items']);
-        else $data['result'] = updateTodo($data);
+        if (isset($data['items'])) $data['result'] = $todoDb->updateTodos($data['items']);
+        else $data['result'] = $todoDb->updateTodo($data);
         echo json_encode($data);
         write_log("UPDATE", $data);
         break;
     case 'DELETE':
         // Remove todo (DELETE):
         $data = json_decode(file_get_contents('php://input'), true);
-        $data['result'] = deleteTodo($data);
+        $data['result'] = $todoDb->deleteTodo($data['id']);
         echo json_encode($data);
         write_log("DELETE", $data);
         break;
