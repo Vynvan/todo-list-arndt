@@ -1,8 +1,9 @@
 const apiUrl = "todo-api.php";
 let editListener = null; // Holds the listener for accepting the edit of an item
 let items = null; // Drag/Session: Holds the last GET itemlist
-let dragged = null; // Drag: Holds the currently dragged item
-let dragShadow = null; // Drag: Holds the li element that shows the current target position during a drag operation
+let backupLi = null;
+let draggedItem = null; // Drag: Holds the currently dragged item
+let draggedLi = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -66,7 +67,7 @@ function addDeleteButton(li, item) {
 function addDoneButton(li, item) {
     const button = document.createElement('button');
     button.addEventListener('click', () => {
-        item.done = !li.classList.contains('done');
+        item.done = li.classList.contains('done') ? 0 : 1;
         updateItem(item, false);
     });
     button.classList.add('done-btn');
@@ -81,63 +82,22 @@ function addDragFunctionality(li, item) {
     li.addEventListener('dragstart', ev => {
         ev.dataTransfer.effectAllowed = 'move';
         ev.dataTransfer.setData('text/plain', item.id);
-        dragged = item;
-        dragShadow = null;
+        draggedItem = item;
+        draggedLi = getTargetLi(ev).cloneNode(true);
+        backupLi = null;
     });
-    li.addEventListener('dragenter', ev => {
-        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move')
-            ev.preventDefault();
-    });
+    li.addEventListener('dragenter', dragenter);
     li.addEventListener('dragover', ev => {
         if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
             ev.preventDefault();
-            ev.dataTransfer.dropEffect = 'move';
-            
-            // Get the target li element
-            let targetLi = getTargetLi(ev);
-            if (targetLi.tagName !== 'LI' || targetLi.id === dragged.id || targetLi === dragShadow) return;
-            
-            // Find the position the dragShadow should be
-            const before = beforeTarget(targetLi, ev);
-
-            // Set dragShadow if it doesn't exist or is in the wrong place
-            if (before && (!dragShadow || dragShadow.id !== targetLi.previousSibling.id))
-                targetLi.parentNode.insertBefore(createNewDragShadow(), targetLi);
-            else if (!before && targetLi.nextSibling && (!dragShadow || dragShadow.id !== targetLi.nextSibling.id))
-                targetLi.parentNode.insertBefore(createNewDragShadow(), targetLi.nextSibling);
-            else if (!before && !targetLi.nextSibling)
-                targetLi.parentNode.appendChild(createNewDragShadow());
         }
     });
     li.addEventListener('drop', ev => {
         if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
             ev.preventDefault();
 
-            // Get the target li element
-            let targetLi = getTargetLi(ev);
-            if (targetLi.nextSibling.id == dragged.id || targetLi.previousSibling.id == dragged.id) {
-                deleteDragShadow();
-                console.log("target.id == sibling.id")
-                return;
-            }
-
-            // Make sure the target li element isn't the dragShadow, but a real li element
-            if (targetLi === dragShadow) {
-                const sibling = targetLi.nextSibling ?? targetLi.previousSibling;
-                const siblingIx = items.find(el => el.id == sibling.id).ix;
-                targetLi = siblingIx < dragged.ix ? targetLi.previousSibling ?? sibling : sibling;
-                console.log("target was shadow, is now '" + sibling.children[0].textContent + "'")
-            }
-            const targetItem = items.find(el => el.id == targetLi.id);
-            let startIx = dragged.ix < targetItem.ix ? dragged.ix : targetItem.ix;
-            const lastIx = dragged.ix < targetItem.ix ? targetItem.ix : dragged.ix;
-            const toUpdate = items.filter(el => el.ix >= startIx && el.ix <= lastIx);
-            console.log("startIx=" + startIx + ", lastIx=" + lastIx + ", Items to update=" + toUpdate.length + " (" + toUpdate.reduce((out, cur) => out + "," + cur.title, "") + ")")
-            toUpdate.forEach(el => el.ix = startIx++);
-            updateItems(toUpdate);
-            dragShadow.classList.remove('dropIn');
+            // TODO: Compare items with lis and PUT changes
         }
-        deleteDragShadow();
     });
 }
 
@@ -166,7 +126,12 @@ function addEditButton(li, item) {
     li.appendChild(button);
 }
 
-// Return true, if the cursor is in the upper side of the given element during the given event
+/**
+ * Return true, if the cursor is in the upper side of the given element during the given mouse-event
+ * @param {*} element 
+ * @param {*} event 
+ * @returns 
+ */
 function beforeTarget(element, event) {
     const rect = element.getBoundingClientRect();
     const cursorY = event.clientY - rect.top;
@@ -209,8 +174,25 @@ function createTodoElement(item) {
 
 // Removes and deletes the dragShadow
 function deleteDragShadow() {
-    dragShadow.remove();
+    if (dragShadow) dragShadow.remove();
     dragShadow = null;
+}
+
+function dragenter(ev) {
+    if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+        ev.preventDefault();
+        const targetLi = getTargetLi(ev);
+        if (targetLi && targetLi.tagName === "LI" && targetLi.id != draggedLi.id) {
+            const ul = targetLi.parentNode;
+            const prevLi = ul.querySelector(`li[id="${draggedLi.id}"]`);
+            if (prevLi) {
+                const clone = targetLi.cloneNode(true);
+                clone.addEventListener("dragenter", dragenter);
+                ul.replaceChild(clone, prevLi);
+            }
+            ul.replaceChild(draggedLi, targetLi);
+        }
+    }
 }
 
 // Returns the target li element of the given event
@@ -230,10 +212,9 @@ function getTargetLi(event) {
 function insertItem(item) {
     const { id, title, ix, done } = item;
     const newItem = { id, title, ix, done };
-    const index = items.indexOf(el => el.id == id);
-    if (index != -1) {
+    const index = items.findIndex(el => el.id == id);
+    if (index != -1)
         items[index] = newItem;
-    }
     else items.push(newItem);
 }
 
@@ -244,7 +225,7 @@ function insertItem(item) {
  * @param {*} update If true, the given todo items are merged with the existing ones
  */
 function printTodoElements(data, update=false) {
-    if (update) {
+    if (update && items && items.length > 0) {
         data.forEach(item => insertItem(item));
         items.sort((a, b) => a.ix - b.ix);
     }

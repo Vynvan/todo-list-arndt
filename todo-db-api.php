@@ -1,8 +1,9 @@
 <?php
+require_once 'config.php';
 
 function getPDO() {
+    global $host, $db, $charset, $user, $pass;
     try {
-        require_once 'config.php';
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -38,18 +39,32 @@ function deleteTodo($item) {
 }
 
 function updateTodo($item) {
-    $uDone = isset($item['done']);
-    $uIx = isset($item['done']);
-    $uText = isset($item['title']);
-    if ($uDone || $uIx || $uText) {
-        $done = $uDone ? " completed=:done" : "";
-        $ix = $uIx ? " ix=:ix" : "";
-        $text = $uText ? " text=:text " : "";
-        $pdo = getPDO();
-        $stmt = $pdo->prepare("UPDATE todos SET" . $done . ($done && $uIx ? ", " : "") . $ix . (($done || $uIx) && $text ? ", " : "") . $text . "WHERE id=:id");
-        $result = $stmt->execute(["id" => $item['id'], "text" => $item['title'], "ix" => $item['ix'], "done" => ($item['done'])]);
-        return $result;
+    $query = "UPDATE todos SET ";
+    $setParts = [];
+    $values = array("id" => $item['id']);
+    if (isset($item['done'])) {
+        $setParts[] = "completed=:done";
+        $values["done"] = $item['done'];
     }
+    if (isset($item['ix'])) {
+        $setParts[] = "ix=:ix";
+        $values["ix"] = $item['ix'];
+    }
+    if (isset($item['title'])) {
+        $setParts[] = "text=:title";
+        $values["title"] = $item['title'];
+    }
+
+    if (count($setParts) > 0) {
+        $query .= implode(', ', $setParts);
+        $query .= " WHERE id=:id";
+    }
+    else return false;
+
+    $pdo = getPDO();
+    $stmt = $pdo->prepare($query);
+    $result = $stmt->execute($values);
+    return $result;
 }
 
 function updateTodos($items) {
