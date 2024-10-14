@@ -41,7 +41,9 @@ function addTodoElement(list, item) {
 
 // Adds the delete button with funtionality for the given item to the given li-element
 function addDeleteButton(li, item) {
-    const button = document.createElement('button');
+    const button = createRoundButton();
+    button.classList.add('del-btn');
+    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3" viewBox="0 0 16 16"><path d="M6.5 1h3a.5.5 0 0 1 .5.5v1H6v-1a.5.5 0 0 1 .5-.5M11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3A1.5 1.5 0 0 0 5 1.5v1H1.5a.5.5 0 0 0 0 1h.538l.853 10.66A2 2 0 0 0 4.885 16h6.23a2 2 0 0 0 1.994-1.84l.853-10.66h.538a.5.5 0 0 0 0-1zm1.958 1-.846 10.58a1 1 0 0 1-.997.92h-6.23a1 1 0 0 1-.997-.92L3.042 3.5zm-7.487 1a.5.5 0 0 1 .528.47l.5 8.5a.5.5 0 0 1-.998.06L5 5.03a.5.5 0 0 1 .47-.53Zm5.058 0a.5.5 0 0 1 .47.53l-.5 8.5a.5.5 0 1 1-.998-.06l.5-8.5a.5.5 0 0 1 .528-.47M8 4.5a.5.5 0 0 1 .5.5v8.5a.5.5 0 0 1-1 0V5a.5.5 0 0 1 .5-.5"/></svg>';
     button.addEventListener('click', () => {
         fetch(apiUrl, {
             headers: {
@@ -56,60 +58,62 @@ function addDeleteButton(li, item) {
             li.remove();
         });
     });
-    button.classList.add('del-btn');
-    button.classList.add('material-symbols-outlined');
-    button.innerHTML = 'delete_forever';
     li.appendChild(button);
 }
 
 // Adds the done button with funtionality for the given item to the given li-element
 function addDoneButton(li, item) {
-    const button = document.createElement('button');
+    const button = createRoundButton();
+    button.classList.add('done-btn');
+    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>';
     button.addEventListener('click', () => {
         item.done = li.classList.contains('done') ? 0 : 1;
         updateItem(item, false);
     });
-    button.classList.add('done-btn');
-    button.classList.add('material-symbols-outlined');
-    button.innerHTML = 'check';
     li.appendChild(button);
 }
 
-// Adds everything needed for drag'n'drop to work
+/**
+ * Adds everything needed for drag'n'drop to work: The attribute 'draggable' 
+ * and the eventlisteners 'dragstart', 'dragenter', 'dragover' and 'drop'.
+ * @param {*} li 
+ * @param {*} item 
+ */
 function addDragFunctionality(li, item) {
     li.setAttribute('draggable', 'true');
     li.addEventListener('dragstart', ev => dragstart(ev, item));
     li.addEventListener('dragenter', dragenter);
     li.addEventListener('dragover', ev => {
-        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
+        if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move')
             ev.preventDefault();
-        }
     });
     li.addEventListener('drop', drop);
 }
 
-// Adds the edit button with funtionality for the given item to the given li-element
+/**
+ * Adds the edit button with funtionality for the given item to the given li-element.
+ * @param {*} li 
+ * @param {*} item 
+ */
 function addEditButton(li, item) {
-    const button = document.createElement('button');
+    const button = createRoundButton();
+    button.classList.add('edit-btn');
+    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></svg>';
     button.addEventListener('click', () => {
         const editForm = document.getElementById('edit-form');
         const editInput = document.getElementById('edit-input');
-
-        if (editForm.classList.contains('hidden'))
-            switchForms();
-        editInput.value = item.title;
-
-        editForm.removeEventListener('submit', editListener);
-        editListener = (ev) => {
-            ev.preventDefault();
-            item.title = editInput.value;
-            updateItem(item, true);
+        if (editForm.classList.contains('hidden')) {
+            editInput.value = item.title;
+            editForm.removeEventListener('submit', editListener);
+            editListener = (ev) => {
+                ev.preventDefault();
+                item.title = editInput.value;
+                updateItem(item, true);
+            }
+            editForm.addEventListener('submit', editListener);
         }
-        editForm.addEventListener('submit', editListener);
+        switchForms();
     });
-    button.classList.add('edit-btn');
-    button.classList.add('material-symbols-outlined');
-    button.innerHTML = 'edit';
     li.appendChild(button);
 }
 
@@ -125,29 +129,31 @@ function beforeTarget(element, event) {
     return cursorY < rect.height / 2;
 }
 
-// Checks if the given li element represents the given todo. This is checked first by id, then by completion state, then by title
+// Checks if the given li element represents the given todo. This is checked first by id, then by completion state, then by title. DEPRECATED
 function containsTodo(li, todo) {
     if (li.id !== todo.id) return false;
-    if (li['ix'] == todo.ix) return false;
     if (li.classList.contains('done') && todo.done == 1) return false;
     const text = li.getElementsByTagName('span')[0];
     return text.textContent == todo.title;
 }
 
-// Deletes the dragShadow and returns a new one to place it
-function createNewDragShadow() {
-    if (dragShadow) dragShadow.remove();
-    dragShadow = createTodoElement(dragged);
-    dragShadow.classList.add('dropIn');
-    return dragShadow;
+/**
+ * Creates a button element with the classes 'btn btn-primary rounded-circle'.
+ * @returns The created button
+ */
+function createRoundButton() {
+    const btn = document.createElement('button');
+    btn.classList.add('btn');
+    btn.classList.add('btn-primary');
+    btn.classList.add('rounded-circle');
+    return btn;
 }
 
-// Creates a li-element for the given todo item
+// Creates a li-element for the given todo item.
 function createTodoElement(item) {
     const li = document.createElement('li');
     const text = document.createElement('span');
     li.id = item.id;
-    li.setAttribute('ix', item.ix);
     if (item.done)
         li.classList.add('done');
     text.textContent = item.title;
@@ -159,12 +165,17 @@ function createTodoElement(item) {
     return li;
 }
 
-// Removes and deletes the dragShadow
+// Removes and deletes the dragShadow.
 function deleteDragShadow() {
     if (dragShadow) dragShadow.remove();
     dragShadow = null;
 }
 
+/**
+ * Lets the draggedLi switch position with the li element currently under the mouse. 
+ * For this a clone is created and equipped with all needed drag eventhandlers.
+ * @param {*} ev 
+ */
 function dragenter(ev) {
     if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
         ev.preventDefault();
@@ -183,6 +194,11 @@ function dragenter(ev) {
     }
 }
 
+/**
+ * Sets the dataTransfer to 'text/plain' and 'move, draggedItem to the todolist item and draggedLi to a clone of the eventTarget li.
+ * @param {*} ev 
+ * @param {*} item 
+ */
 function dragstart(ev, item) {
     ev.dataTransfer.effectAllowed = 'move';
     ev.dataTransfer.setData('text/plain', item.id);
@@ -191,12 +207,17 @@ function dragstart(ev, item) {
     addDragFunctionality(draggedLi, item);
 }
 
+/**
+ * Compares the ul with the items list and runs the updateItems function to update all changes. 
+ * Even if no changes are made, the printTodoElements is called to print the ul anew to ensure full functionality 
+ * (because the cloned li lack some eventhandlers).
+ * @param {*} ev 
+ */
 function drop(ev) {
     if (ev.dataTransfer.types.includes('text/plain') && ev.dataTransfer.effectAllowed === 'move') {
         ev.preventDefault();
         const toUpdate = [];
         const lis = document.getElementById('todo-list').childNodes;
-        const targetLi = getTargetLi(ev);
         for (i=0; i < lis.length; i++) {
             const item = items[i].id == lis[i].id ? items[i] : items.find(el => el.id == lis[i].id);
             if (item.ix !== i) {
@@ -206,6 +227,7 @@ function drop(ev) {
         }
         if (toUpdate.length != 0)
             updateItems(toUpdate);
+        else printTodoElements(items);
     }
 }
 
