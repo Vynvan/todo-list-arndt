@@ -1,4 +1,4 @@
-ul {
+main.container {
     padding-inline-start: 0;
     max-width: 400px;
 }
@@ -19,6 +19,7 @@ li span {
 form {
     display: flex;
     align-items: center;
+    padding-left: calc(var(--bs-gutter-x)* .5);
 }
 
 button.btn {
